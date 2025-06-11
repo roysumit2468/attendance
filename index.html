@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Form</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 500px; margin: auto; }
+    label, select, input { display: block; margin-top: 10px; width: 100%; padding: 8px; }
+    .time-group { display: flex; gap: 5px; }
+    .time-group select { flex: 1; }
+    button { margin-top: 15px; padding: 10px; width: 100%; background-color: #4CAF50; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <h2>Attendance Form</h2>
+  <form id="attendanceForm">
+    <label>Date</label>
+    <input type="date" id="date" required>
+
+    <label>Department</label>
+    <select id="department" required>
+      <option value="">Select</option>
+      <option value="FM">FM</option>
+      <option value="SUPERVISOR">SUPERVISOR</option>
+      <option value="SECURITY GUARD">SECURITY GUARD</option>
+      <option value="PLUMBER">PLUMBER</option>
+      <option value="ELECTRICIAN">ELECTRICIAN</option>
+      <option value="GARDENER">GARDENER</option>
+      <option value="HOUSEKEEPING">HOUSEKEEPING</option>
+    </select>
+
+    <label>Name</label>
+    <select id="name" required></select>
+
+    <label>In Time</label>
+    <div class="time-group">
+      <select id="in_hour" required></select>
+      <select id="in_minute" required></select>
+      <select id="in_ampm" required>
+        <option>AM</option>
+        <option>PM</option>
+      </select>
+    </div>
+
+    <label>Out Time</label>
+    <div class="time-group">
+      <select id="out_hour" required></select>
+      <select id="out_minute" required></select>
+      <select id="out_ampm" required>
+        <option>AM</option>
+        <option>PM</option>
+      </select>
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const deptToNames = {
+      "FM": ["Ravi", "Suman"],
+      "SUPERVISOR": ["Anil", "Meena"],
+      "SECURITY GUARD": ["Karan", "Deepak"],
+      "PLUMBER": ["Arjun", "Rohit"],
+      "ELECTRICIAN": ["Vinod", "Kishore"],
+      "GARDENER": ["Shyam", "Bhola"],
+      "HOUSEKEEPING": ["Pooja", "Radha"]
+    };
+
+    function populateSelect(id, range) {
+      const select = document.getElementById(id);
+      range.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = v.toString().padStart(2, "0");
+        select.appendChild(opt);
+      });
+    }
+
+    // Populate hour and minute dropdowns
+    populateSelect("in_hour", Array.from({length: 12}, (_, i) => i + 1));
+    populateSelect("in_minute", Array.from({length: 60}, (_, i) => i));
+    populateSelect("out_hour", Array.from({length: 12}, (_, i) => i + 1));
+    populateSelect("out_minute", Array.from({length: 60}, (_, i) => i));
+
+    const departmentSelect = document.getElementById("department");
+    const nameSelect = document.getElementById("name");
+
+    departmentSelect.addEventListener("change", () => {
+      const names = deptToNames[departmentSelect.value] || [];
+      nameSelect.innerHTML = "";
+      names.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        nameSelect.appendChild(opt);
+      });
+    });
+
+    document.getElementById("date").valueAsDate = new Date();
+
+    document.getElementById("attendanceForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      function getTime(prefix) {
+        const hour = document.getElementById(prefix + "_hour").value;
+        const min = document.getElementById(prefix + "_minute").value;
+        const ampm = document.getElementById(prefix + "_ampm").value;
+        return `${hour}:${min} ${ampm}`;
+      }
+
+      const data = {
+        date: document.getElementById("date").value,
+        department: document.getElementById("department").value,
+        name: document.getElementById("name").value,
+        intime: getTime("in"),
+        outtime: getTime("out")
+      };
+
+      fetch("https://script.google.com/macros/s/AKfycbx7x8qKMLTnl_nNu6JiF6a_uVIqQX3nzLEaXyZK7k2Ex9AGbfiB4WlrMqx6XgZoLvZt7g/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(res => {
+        document.getElementById("status").textContent = "Submitted successfully!";
+        document.getElementById("attendanceForm").reset();
+        document.getElementById("date").valueAsDate = new Date();
+      })
+      .catch(err => {
+        document.getElementById("status").textContent = "Error: " + err;
+      });
+    });
+  </script>
+</body>
+</html>
